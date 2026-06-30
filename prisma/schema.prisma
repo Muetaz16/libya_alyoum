@@ -1,0 +1,141 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  EDITOR
+  JOURNALIST
+  VIEWER
+}
+
+enum NewsStatus {
+  DRAFT
+  SUBMITTED
+  PUBLISHED
+}
+
+enum AdPosition {
+  HEADER
+  SIDEBAR
+  FOOTER
+  IN_ARTICLE
+}
+
+enum AdStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SubscriptionStatus {
+  SUBSCRIBED
+  UNSUBSCRIBED
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         Role          @default(VIEWER)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  news         News[]
+  activityLogs ActivityLog[]
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  nameAr    String
+  nameEn    String
+  slug      String     @unique
+  icon      String?    // Lucide icon name, e.g. "Briefcase", "Globe", etc.
+  color     String?    // Hex color or tailwind class
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  news      News[]
+  parentId  String?
+  parent    Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  children  Category[] @relation("SubCategories")
+  order     Int        @default(0)
+}
+
+model News {
+  id          String     @id @default(uuid())
+  titleAr     String
+  titleEn     String?
+  contentAr   String     @db.Text
+  contentEn   String?    @db.Text
+  summaryAr   String     @db.Text
+  summaryEn   String?    @db.Text
+  slug        String     @unique
+  image       String? // URL or local path for main image
+  videoUrl    String? // YouTube URL
+  isFeatured  Boolean    @default(false)
+  isBreaking  Boolean    @default(false)
+  status      NewsStatus @default(DRAFT)
+  publishDate DateTime   @default(now())
+  views       Int        @default(0)
+  tags        String[] // Tags stored as string array
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([status, publishDate])
+  @@index([isFeatured])
+  @@index([categoryId])
+  @@index([views(sort: Desc)])
+}
+
+model BreakingNews {
+  id         String    @id @default(uuid())
+  textAr     String
+  textEn     String?
+  isTicker   Boolean   @default(true)
+  expiryTime DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Ad {
+  id        String     @id @default(uuid())
+  title     String
+  image     String // URL or local path
+  link      String // Target link URL
+  position  AdPosition @default(SIDEBAR)
+  status    AdStatus   @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Newsletter {
+  id        String             @id @default(uuid())
+  email     String             @unique
+  status    SubscriptionStatus @default(SUBSCRIBED)
+  createdAt DateTime           @default(now())
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text // Can be string or JSON string
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?  @db.Text
+  createdAt DateTime @default(now())
+}
