@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: libya_alyoum_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: libyaalyoum
+    volumes:
+      - libya_alyoum_pgdata:/var/lib/postgresql/data
+    restart: always
+
   app:
     build:
       context: .
@@ -15,10 +26,9 @@ services:
       - PORT=3009
     env_file:
       - .env
+    depends_on:
+      - db
     restart: always
-    networks:
-      - al-mada-newspaper_default
 
-networks:
-  al-mada-newspaper_default:
-    external: true
+volumes:
+  libya_alyoum_pgdata:
