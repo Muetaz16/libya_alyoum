@@ -10,6 +10,7 @@ COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 
 RUN npm ci --legacy-peer-deps
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 
 # Rebuild the source code only when needed
