@@ -6,7 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: libya_alyoum_app
-    network_mode: "host"
+    ports:
+      - "3009:3009"
     volumes:
       - ./public/uploads:/app/public/uploads
     environment:
@@ -15,3 +16,9 @@ services:
     env_file:
       - .env
     restart: always
+    networks:
+      - al-mada-newspaper_default
+
+networks:
+  al-mada-newspaper_default:
+    external: true
